@@ -21,6 +21,8 @@ Vue.use(Vuex)
 //不基于vue,如果想绑定在vue上面
 Vue.prototype.$axios = axios
 axios.defaults.baseURL = "http://39.108.135.214:8899/"
+//在跨域的时候，允许访问服务器带上cookies
+axios.defaults.withCredentials = true
 
 
 // 导入单页面组件(相当于定义组件)
@@ -29,6 +31,8 @@ import layout from "./components/layout"
 import goodslist from "./components/goods/goodslist.vue"
 import goodsInfo from './components/goods/goodsinfo.vue'
 import shopcart from './components/shopcart/shopcart.vue'
+import login from './components/account/login.vue'
+import order from './components/order/order.vue'
 
 
 // 定义全局过滤器
@@ -48,12 +52,44 @@ const router = new VueRouter({
   routes: [
     { path:'/' , redirect:'/site/goodslist'},
     { path:'/site', component: layout,children: [
-        {  path: 'goodslist',component: goodslist },
+        {  path: 'goodslist',component: goodslist,name:'goodslist' },
         {  path: 'goodsInfo/:goodsid',component: goodsInfo },
-        {  path:'shopcart',component: shopcart}
+        {  path:'shopcart',component: shopcart},
+        {  path:'login',component: login, name:'login'},
+        // 需要登录的
+        {  path:'order/:ids',component: order,meta:{needLogin:true}},
       ]
     }
   ]
+})
+
+
+
+// 路由元信息配合导航守卫
+router.beforeEach((to, from, next) => {
+  // 除了登录,每次都记录一下即将要去的路由
+  if(to.path!='/site/login'){
+    localStorage.setItem('lastPath',to.path)
+  }
+
+  // 判断是否需要判断登录
+  if (to.meta.needLogin) {
+    const url = 'site/account/islogin'
+    
+    // main.js中因为直接引入了axios,所以可以直接使用,不需要this.$axios
+    axios.get(url).then(response=>{
+      // 未登录
+      if(response.data.code == 'nologin'){
+        router.push({name:'login'})
+      }else{
+        next()
+      }
+    })
+
+  } else {
+    // 路由元信息不需要验证登录的页面
+    next() 
+  }
 })
 
 

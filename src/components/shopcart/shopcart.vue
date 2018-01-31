@@ -73,7 +73,7 @@
                                 <td width="104" align="left">{{item.sell_price * item.buycount}}(元)</td>
                                 <td width="54" align="center">
                                     <!-- <a href="javascript:;" @click='deleteGoods(item.id,index)'>删除</a> -->
-                                    <el-button type="text" @click="deleteGoods">删除</el-button>
+                                    <el-button type="text" @click="deleteGoods(item.id,index)">删除</el-button>
                                 </td>
                             </tr>
                             <tr v-if='goodsList.length <= 0'>
@@ -105,8 +105,8 @@
                 <!--购物车底部-->
                 <div class="cart-foot clearfix">
                     <div class="right-box">
-                        <button class="button" onclick="javascript:location.href='/index.html';">继续购物</button>
-                        <button class="submit" onclick="formSubmit(this, '/', '/shopping.html');">立即结算</button>
+                        <button class="button" @click="goBuy">继续购物</button>
+                        <button class="submit" @click="goToPay">立即结算</button>
                     </div>
                 </div>
                 <!--购物车底部-->
@@ -136,6 +136,7 @@ export default {
   },
   created(){
       this.getGoodsListData()
+    //   console.log(goodsList)
   },
 //   注册子组件
   components:{
@@ -183,7 +184,7 @@ export default {
                item.isSelected = true
            });
            this.goodsList  = response.data.message
-           console.log(this.goodsList)
+        //    console.log(this.goodsList)
        }) 
     },
     // 通过自定义事件,接受子组件传过来的值
@@ -218,7 +219,25 @@ export default {
             message: '已取消删除'
           });          
         });
+    },
+
+    // 继续购买
+    goBuy(){
+        this.$router.push({name:'goodslist'})
+    },
+
+    // 支付
+    goToPay(){
+        const ids=[]
+        this.goodsList.forEach(item=>{
+            
+            ids.push(item.id)
+        })
+        const url = `/site/order/${ids.join(',')}`
+
+        this.$router.push(url)
     }
+
 
   }
 }

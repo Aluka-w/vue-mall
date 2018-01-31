@@ -11,16 +11,16 @@
                         <a target="_blank" href="#"></a>
                     </div>
                     <div id="menu" class="right-box">
-                        <span style="display: none;">
+                        <span style="display: none;" v-show='!haslogin'>
                             <a href="" class="">登录</a>
                             <strong>|</strong>
                             <a href="" class="">注册</a>
                             <strong>|</strong>
                         </span>
-                        <span>
+                        <span v-show='haslogin'>
                             <a href="" class="">会员中心</a>
                             <strong>|</strong>
-                            <a>退出</a>
+                            <a href="javascript:;" @click="logout">退出</a>
                             <strong>|</strong>
                         </span>
                         <router-link to="/site/shopcart" class="" id="buyCarRef">
@@ -125,10 +125,21 @@
 </style>
 
 <script>
+// 非父子组件传值
+import bus from '../common/common'
+// 按需导入
+import {ISLOGIN} from '../common/common'
+
+
     // 可以局部引入jquery
     // import $ from 'jquery'
 export default {
     // 保证所有的dom元素加载完成,生命周期钩子函数
+  data(){
+      return{
+          haslogin:false
+      }
+  },
   mounted(){
         $("#menu2 li a").wrapInner('<span class="out"></span>');
         $("#menu2 li a").each(function () {
@@ -143,7 +154,41 @@ export default {
             $(".out", this).stop().animate({ 'top': '0px' }, 300); // move up - show
             $(".over", this).stop().animate({ 'top': '-48px' }, 300); // move up - hide
         });
-  } 
+  } ,
+  created(){
+    //   第一种方法,通过非父子组件进行传参
+      bus.$on(ISLOGIN,(islogin)=>{
+          this.haslogin = islogin
+      })
+    //  第二种方法,直接请求接口判断是否登录了 
+    this.logined()
+  },
+  methods:{
+    //   判断是否登录
+    logined(){
+        const url ='site/account/islogin'
+        this.$axios.get(url).then(response=>{
+            if(response.data.code=='nologin'){
+                this.haslogin = false
+            }else{
+               this.haslogin = true 
+            }
+        })
+    },
+    // 登出
+    logout(){
+        const url='site/account/logout'
+        this.$axios.get(url).then(response=>{
+            if(response.data.status=='1'){
+                this.$message.error(response.data.message)
+                return
+            }else{
+                this.haslogin = false
+                this.$router.push({name:'goodslist'})
+            }
+        })
+    }
+  }
 }
 </script>
 
